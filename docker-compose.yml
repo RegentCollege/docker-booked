@@ -2,7 +2,7 @@ version: "3"
 services:
   app:
     build: .
-    image: olaxe/docker-booked
+    image: RegentCollege/docker-booked
     ports:
       - 80
     volumes:
