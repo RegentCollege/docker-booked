@@ -1,8 +1,8 @@
 FROM php:7.3.6-apache
 MAINTAINER codyrigg
 
-ENV BOOKED_DL_URL "https://sourceforge.net/projects/phpscheduleit/files/Booked/2.7/booked-2.7.2.zip"
-ENV BOOKED_DL_FILE "booked-2.7.2.zip"
+ENV BOOKED_DL_URL "https://sourceforge.net/projects/phpscheduleit/files/Booked/2.7/booked-2.7.6.zip"
+ENV BOOKED_DL_FILE "booked-2.7.6.zip"
 ENV BOOKED_APP_TITLE "Booked Scheduler"
 ENV BOOKED_DEFAULT_TIMEZONE "Europe/Paris"
 ENV TZ $BOOKED_DEFAULT_TIMEZONE
