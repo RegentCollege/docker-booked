@@ -1,5 +1,5 @@
-FROM php:5.6-apache
-MAINTAINER Olaxe
+FROM php:7.3.6-apache
+MAINTAINER codyrigg
 
 ENV BOOKED_DL_URL "https://sourceforge.net/projects/phpscheduleit/files/Booked/2.7/booked-2.7.2.zip"
 ENV BOOKED_DL_FILE "booked-2.7.2.zip"
@@ -164,6 +164,6 @@ RUN cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-availabl
 
 WORKDIR /var/www/booked
 
-EXPOSE 80 443
+EXPOSE 80
 
 CMD ["apache2-foreground"]
