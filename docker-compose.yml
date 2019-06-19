@@ -1,22 +1,27 @@
-version: "3"
+version: '3.3'
 services:
   app:
     build: .
+    restart: always
+    env_file: booked.env
     image: regentcollege/docker-booked
-    ports:
-      - 80
+    ports: 
+       - '8080:80'
     volumes:
       - ./uploads:/var/www/booked/uploads
       - ./Web/uploads:/var/www/booked/Web/uploads
       - ./Web/img:/var/www/booked/Web/img
     depends_on:
       - mysql
-
   mysql:
     image: mysql:5.7
     volumes:
       - data:/var/lib/mysql
     env_file: mysql.env
-
-volumes:
-  data:
+    ports:
+      # <Port exposed> : < MySQL Port running inside container>
+      - '3306:3306'
+    expose:
+      # Opens port 3306 on the container
+      - '3306'
+      # Where our data will be persisted
