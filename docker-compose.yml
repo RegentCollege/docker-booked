@@ -4,7 +4,6 @@ services:
     build: .
     restart: always
     env_file: booked.env
-    image: regentcollege/docker-booked
     ports: 
        - '8080:80'
     volumes:
@@ -21,7 +20,5 @@ services:
     ports:
       # <Port exposed> : < MySQL Port running inside container>
       - '3306:3306'
-    expose:
-      # Opens port 3306 on the container
-      - '3306'
-      # Where our data will be persisted
+volumes:
+  data:
