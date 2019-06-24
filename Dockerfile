@@ -4,10 +4,10 @@ MAINTAINER codyrigg
 ENV BOOKED_DL_URL "https://sourceforge.net/projects/phpscheduleit/files/Booked/2.7/booked-2.7.6.zip"
 ENV BOOKED_DL_FILE "booked-2.7.6.zip"
 ENV BOOKED_APP_TITLE "Booked Scheduler"
-ENV BOOKED_DEFAULT_TIMEZONE "Europe/Paris"
+ENV BOOKED_DEFAULT_TIMEZONE "America/Vancouver"
 ENV TZ $BOOKED_DEFAULT_TIMEZONE
 ENV BOOKED_ALLOW_SELF_REGISTRATION "true"
-ENV BOOKED_ADMIN_EMAIL "admin@example.com"
+ENV BOOKED_ADMIN_EMAIL "sysadmin@example.com"
 ENV BOOKED_ADMIN_EMAIL_NAME "Booked Administrator"
 ENV BOOKED_DEFAULT_PAGE_SIZE "50"
 ENV BOOKED_ENABLE_EMAIL "true"
@@ -18,10 +18,10 @@ ENV BOOKED_REGISTRATION_CAPTCHA_ENABLED "true"
 ENV BOOKED_REGISTRATION_REQUIRE_EMAIL_ACTIVATION "false"
 ENV BOOKED_REGISTRATION_AUTO_SUBSCRIBE_EMAIL "false"
 ENV BOOKED_REGISTRATION_NOTIFY_ADMIN "false"
-ENV BOOKED_HOME_URL "$BOOKED_WEB_URL/dashboard.php"
+ENV BOOKED_HOME_URL "http://localhost/Web/dashboard.php"
 ENV BOOKED_SCHEDULE_USE_PER_USER_COLORS "false"
 ENV BOOKED_SCHEDULE_SHOW_INACCESSIBLE_RESOURCES "true"
-ENV BOOKED_SCHEDULE_RESERVATION_LABEL "{name}"
+ENV BOOKED_SCHEDULE_RESERVATION_LABEL "{title}"
 ENV BOOKED_SCHEDULE_HIDE_BLOCKED_PERIODS "false"
 ENV BOOKED_ICS_SUBSCRIPTION_KEY ""
 ENV BOOKED_PRIVACY_VIEW_SCHEDULES "true"
@@ -52,6 +52,7 @@ ENV BOOKED_PHPMAILER_SMTP_USERNAME ""
 ENV BOOKED_PHPMAILER_SMTP_PASSWORD ""
 ENV BOOKED_PHPMAILER_SENDMAIL_PATH "/usr/sbin/sendmail"
 ENV BOOKED_PHPMAILER_SMTP_DEBUG "false"
+ENV BOOKED_PLUGINS_AUTHENTICATION ""
 ENV BOOKED_INSTALL_PASSWORD ""
 ENV BOOKED_API_ENABLED "true"
 ENV BOOKED_EMAIL_DEFAULT_FROM_ADDRESS ""
@@ -64,7 +65,20 @@ ENV BOOKED_RESERVATION_LABELS_RESOURCE_CALENDAR "{name}"
 ENV BOOKED_RESERVATION_LABELS_RESERVATION_POPUP ""
 ENV BOOKED_CREDITS_ENABLED "false"
 ENV BOOKED_CREDITS_ALLOW_PURCHASE "false"
-
+ENV BOOKED_AD_DC ""
+ENV BOOKED_AD_PORT "389"
+ENV BOOKED_AD_USERNAME "user"
+ENV BOOKED_AD_PASSWORD "pass"
+ENV BOOKED_AD_BASEDN "OU=Users,DC=domain,DC=local"
+ENV BOOKED_AD_VERSION "3"
+ENV BOOKED_AD_SSL "false"
+ENV BOOKED_AD_SUFFIX "false"
+ENV BOOKED_AD_DATABASE_NO_LDAP "true"
+ENV BOOKED_AD_ATTRIBUTE "sn=sn,givenname=givenname,mail=mail,telephonenumber=telephonenumber,physicaldeliveryofficename=physicaldeliveryofficename,title=title"
+ENV BOOKED_AD_REQ_GROUPS ""
+ENV BOOKED_AD_SYNC_GROUPS "false"
+ENV BOOKED_AD_SSO "false"
+ENV BOOKED_AD_CLEAN_USERNAME "false"
 COPY php.ini /usr/local/etc/php/
 
 RUN apt-get update && \
@@ -77,7 +91,11 @@ RUN apt-get update && \
     libjpeg62-turbo-dev \
     zlib1g-dev \
     libicu-dev \
-    g++
+    g++ \
+	libldap2-dev&& \
+    rm -rf /var/lib/apt/lists/* && \
+    docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/ && \
+    docker-php-ext-install ldap
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
@@ -90,7 +108,9 @@ RUN docker-php-ext-install -j$(nproc) mysqli pdo pdo_mysql \
 
 RUN cd /var/www && curl -L -Os $BOOKED_DL_URL && \
     unzip $BOOKED_DL_FILE && \
-    cp booked/config/config.dist.php booked/config/config.php
+    cp booked/config/config.dist.php booked/config/config.php && \
+	cp booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.dist.php booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php 
+	
 RUN sed -i -e '/app.title/ s/=.*/= getenv('BOOKED_APP_TITLE');/' /var/www/booked/config/config.php && \
 sed -i -e '/default.timezone/ s/=.*/= getenv('BOOKED_DEFAULT_TIMEZONE');/' /var/www/booked/config/config.php && \
 sed -i -e '/allow.self.registration/ s/=.*/= getenv('BOOKED_ALLOW_SELF_REGISTRATION');/' /var/www/booked/config/config.php && \
@@ -140,6 +160,7 @@ sed -i -e '/phpmailer'\''\]\['\''smtp.username/ s/=.*/= getenv('BOOKED_PHPMAILER
 sed -i -e '/phpmailer'\''\]\['\''smtp.password/ s/=.*/= getenv('BOOKED_PHPMAILER_SMTP_PASSWORD');/' /var/www/booked/config/config.php && \
 sed -i -e '/phpmailer'\''\]\['\''sendmail.path/ s/=.*/= getenv('BOOKED_PHPMAILER_SENDMAIL_PATH');/' /var/www/booked/config/config.php && \
 sed -i -e '/phpmailer'\''\]\['\''smtp.debug/ s/=.*/= getenv('BOOKED_PHPMAILER_SMTP_DEBUG');/' /var/www/booked/config/config.php && \
+sed -i -e '/plugins'\''\]\['\''Authentication/ s/=.*/= getenv('BOOKED_PLUGINS_AUTHENTICATION');/' /var/www/booked/config/config.php && \
 sed -i -e '/install.password/ s/=.*/= getenv('BOOKED_INSTALL_PASSWORD');/' /var/www/booked/config/config.php && \
 sed -i -e '/api'\''\]\['\''enabled/ s/=.*/= getenv('BOOKED_API_ENABLED');/' /var/www/booked/config/config.php && \
 sed -i -e '/email'\''\]\['\''default.from.address/ s/=.*/= getenv('BOOKED_EMAIL_DEFAULT_FROM_ADDRESS');/' /var/www/booked/config/config.php && \
@@ -151,7 +172,21 @@ sed -i -e '/reservation.labels'\''\]\['\''my.calendary/ s/=.*/= getenv('BOOKED_R
 sed -i -e '/reservation.labels'\''\]\['\''resource.calendar/ s/=.*/= getenv('BOOKED_RESERVATION_LABELS_RESOURCE_CALENDAR');/' /var/www/booked/config/config.php && \
 sed -i -e '/reservation.labels'\''\]\['\''reservation.popup/ s/=.*/= getenv('BOOKED_RESERVATION_LABELS_RESERVATION_POPUP');/' /var/www/booked/config/config.php && \
 sed -i -e '/credits'\''\]\['\''enable/ s/=.*/= getenv('BOOKED_CREDITS_ENABLED');/' /var/www/booked/config/config.php && \
-sed -i -e '/credits'\''\]\['\''allow.purchase/ s/=.*/= getenv('BOOKED_CREDITS_ALLOW_PURCHASE');/' /var/www/booked/config/config.php
+sed -i -e '/credits'\''\]\['\''allow.purchase/ s/=.*/= getenv('BOOKED_CREDITS_ALLOW_PURCHASE');/' /var/www/booked/config/config.php && \
+sed -i -e '/settings'\''\]\['\''domain.controllers/ s/=.*/= getenv('BOOKED_AD_DC');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+sed -i -e '/settings'\''\]\['\''port/ s/=.*/= getenv('BOOKED_AD_PORT');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+sed -i -e '/settings'\''\]\['\''username/ s/=.*/= getenv('BOOKED_AD_USERNAME');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+sed -i -e '/settings'\''\]\['\''password/ s/=.*/= getenv('BOOKED_AD_PASSWORD');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+sed -i -e '/settings'\''\]\['\''basedn/ s/=.*/= getenv('BOOKED_AD_BASEDN');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+sed -i -e '/settings'\''\]\['\''version/ s/=.*/= getenv('BOOKED_AD_VERSION');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+sed -i -e '/settings'\''\]\['\''use.ssl/ s/=.*/= getenv('BOOKED_AD_SSL');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+sed -i -e '/settings'\''\]\['\''account.suffix/ s/=.*/= getenv('BOOKED_AD_SUFFIX');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+sed -i -e '/settings'\''\]\['\''database.auth.when.ldap.user.not.found/ s/=.*/= getenv('BOOKED_AD_DATABASE_NO_LDAP');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+sed -i -e '/settings'\''\]\['\''attribute.mapping/ s/=.*/= getenv('BOOKED_AD_ATTRIBUTE');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+sed -i -e '/settings'\''\]\['\''required.groups/ s/=.*/= getenv('BOOKED_AD_REQ_GROUPS');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+sed -i -e '/settings'\''\]\['\''sync.groups/ s/=.*/= getenv('BOOKED_AD_SYNC_GROUPS');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+sed -i -e '/settings'\''\]\['\''use.sso/ s/=.*/= getenv('BOOKED_AD_SSO');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+sed -i -e '/settings'\''\]\['\''prevent.clean.username/ s/=.*/= getenv('BOOKED_AD_CLEAN_USERNAME');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php
 #RUN if [ $BOOKED_UPCOMING_RESERVATIONS <> "13" ] ; then '$lastDate = $now->AddDays(13-$dayOfWeek-1);' -> '$lastDate = $now->AddDays(60-$dayOfWeek-1);' - UpcomingReservationsPresenter.php
 #CMD sh -c 'if [ "$feature_enabled" = true ]; then echo "Feature activated"; else echo "Feature not activated"; fi'
 #RUN if [ $BOOKED_UPCOMING_RESERVATIONS <> "13" ] ; then '$lastDate = $now->AddDays(13-$dayOfWeek-1);' -> '$lastDate = $now->AddDays(60-$dayOfWeek-1);' - UpcomingReservationsPresenter.php
