@@ -18,6 +18,7 @@ ENV BOOKED_REGISTRATION_CAPTCHA_ENABLED "true"
 ENV BOOKED_REGISTRATION_REQUIRE_EMAIL_ACTIVATION "false"
 ENV BOOKED_REGISTRATION_AUTO_SUBSCRIBE_EMAIL "false"
 ENV BOOKED_REGISTRATION_NOTIFY_ADMIN "false"
+ENV BOOKED_DISABLE_PASSWORD_RESET "true"
 ENV BOOKED_HOME_URL "http://localhost/Web/dashboard.php"
 ENV BOOKED_SCHEDULE_USE_PER_USER_COLORS "false"
 ENV BOOKED_SCHEDULE_SHOW_INACCESSIBLE_RESOURCES "true"
@@ -35,6 +36,8 @@ ENV BOOKED_RESERVATION_ALLOW_WAIT_LIST "false"
 ENV BOOKED_RESERVATION_CHECKIN_MINUTES_PRIOR "5"
 ENV BOOKED_RESERVATION_TITLE_REQUIRED "false"
 ENV BOOKED_RESERVATION_DESCRIPTION_REQUIRED "false"
+ENV BOOKED_FACEBOOK_LOGIN "false"
+ENV BOOKED_GOOGLE_LOGIN "false"
 ENV BOOKED_UPLOADS_ENABLE_RESERVATION_ATTACHMENTS "false"
 ENV BOOKED_UPLOADS_RESERVATION_ATTACHMENT_PATH "uploads/reservation"
 ENV BOOKED_UPLOADS_RESERVATION_ATTACHMENT_EXTENSIONS "txt,jpg,gif,png,doc,docx,pdf,xls,xlsx,ppt,pptx,csv"
@@ -124,6 +127,7 @@ sed -i -e '/registration.captcha.enabled/ s/=.*/= getenv('BOOKED_REGISTRATION_CA
 sed -i -e '/registration.require.email.activation/ s/=.*/= getenv('BOOKED_REGISTRATION_REQUIRE_EMAIL_ACTIVATION');/' /var/www/booked/config/config.php && \
 sed -i -e '/registration.auto.subscribe.email/ s/=.*/= getenv('BOOKED_REGISTRATION_AUTO_SUBSCRIBE_EMAIL');/' /var/www/booked/config/config.php && \
 sed -i -e '/registration.notify.admin/ s/=.*/= getenv('BOOKED_REGISTRATION_NOTIFY_ADMIN');/' /var/www/booked/config/config.php && \
+sed -i -e '/disable.password.reset/ s/=.*/= getenv('BOOKED_DISABLE_PASSWORD_RESET');/' /var/www/booked/config/config.php && \
 sed -i -e '/home.url/ s/=.*/= getenv('BOOKED_HOME_URL');/' /var/www/booked/config/config.php && \
 sed -i -e '/logout.url/ s/=.*/= getenv('BOOKED_WEB_URL');/' /var/www/booked/config/config.php && \
 sed -i -e '/default.homepage/ s/=.*/= getenv('BOOKED_DEFAULT_HOMEPAGE');/' /var/www/booked/config/config.php && \
@@ -143,6 +147,8 @@ sed -i -e '/reservation'\''\]\['\''allow.wait.list/ s/=.*/= getenv('BOOKED_RESER
 sed -i -e '/reservation'\''\]\['\''checkin.minutes.prior/ s/=.*/= getenv('BOOKED_RESERVATION_CHECKIN_MINUTES_PRIOR');/' /var/www/booked/config/config.php && \
 sed -i -e '/reservation'\''\]\['\''title.required/ s/=.*/= getenv('BOOKED_RESERVATION_TITLE_REQUIRED');/' /var/www/booked/config/config.php && \
 sed -i -e '/reservation'\''\]\['\''description.required/ s/=.*/= getenv('BOOKED_RESERVATION_DESCRIPTION_REQUIRED');/' /var/www/booked/config/config.php && \
+sed -i -e '/authentication'\''\]\['\''allow.facebook.login/ s/=.*/= getenv('BOOKED_FACEBOOK_LOGIN');/' /var/www/booked/config/config.php && \
+sed -i -e '/authentication'\''\]\['\''allow.google.login/ s/=.*/= getenv('BOOKED_GOOGLE_LOGIN');/' /var/www/booked/config/config.php && \
 sed -i -e '/uploads'\''\]\['\''enable.reservation.attachments/ s/=.*/= getenv('BOOKED_UPLOADS_ENABLE_RESERVATION_ATTACHMENTS');/' /var/www/booked/config/config.php && \
 sed -i -e '/uploads'\''\]\['\''reservation.attachment.path/ s/=.*/= getenv('BOOKED_UPLOADS_RESERVATION_ATTACHMENT_PATH');/' /var/www/booked/config/config.php && \
 sed -i -e '/uploads'\''\]\['\''reservation.attachment.extensions/ s/=.*/= getenv('BOOKED_UPLOADS_RESERVATION_ATTACHMENT_EXTENSIONS');/' /var/www/booked/config/config.php && \
