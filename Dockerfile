@@ -78,6 +78,7 @@ ENV BOOKED_AD_SSL "false"
 ENV BOOKED_AD_SUFFIX "false"
 ENV BOOKED_AD_DATABASE_NO_LDAP "true"
 ENV BOOKED_AD_ATTRIBUTE "sn=sn,givenname=givenname,mail=mail,telephonenumber=telephonenumber,physicaldeliveryofficename=physicaldeliveryofficename,title=title"
+ENV BOOKED_AD_USERATTRIBUTE "sAMAccountName"
 ENV BOOKED_AD_REQ_GROUPS ""
 ENV BOOKED_AD_SYNC_GROUPS "false"
 ENV BOOKED_AD_SSO "false"
@@ -95,6 +96,7 @@ RUN apt-get update && \
     zlib1g-dev \
     libicu-dev \
     g++ \
+	nano \
 	libldap2-dev&& \
     rm -rf /var/lib/apt/lists/* && \
     docker-php-ext-configure ldap --with-libdir=lib/x86_64-linux-gnu/ && \
@@ -112,7 +114,8 @@ RUN docker-php-ext-install -j$(nproc) mysqli pdo pdo_mysql \
 RUN cd /var/www && curl -L -Os $BOOKED_DL_URL && \
     unzip $BOOKED_DL_FILE && \
     cp booked/config/config.dist.php booked/config/config.php && \
-	cp booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.dist.php booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php 
+#	cp booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.dist.php booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php 
+	cp booked/plugins/Authentication/Ldap/Ldap.config.dist.php booked/plugins/Authentication/Ldap/Ldap.config.php
 	
 RUN sed -i -e '/app.title/ s/=.*/= getenv('BOOKED_APP_TITLE');/' /var/www/booked/config/config.php && \
 sed -i -e '/default.timezone/ s/=.*/= getenv('BOOKED_DEFAULT_TIMEZONE');/' /var/www/booked/config/config.php && \
@@ -179,20 +182,37 @@ sed -i -e '/reservation.labels'\''\]\['\''resource.calendar/ s/=.*/= getenv('BOO
 sed -i -e '/reservation.labels'\''\]\['\''reservation.popup/ s/=.*/= getenv('BOOKED_RESERVATION_LABELS_RESERVATION_POPUP');/' /var/www/booked/config/config.php && \
 sed -i -e '/credits'\''\]\['\''enable/ s/=.*/= getenv('BOOKED_CREDITS_ENABLED');/' /var/www/booked/config/config.php && \
 sed -i -e '/credits'\''\]\['\''allow.purchase/ s/=.*/= getenv('BOOKED_CREDITS_ALLOW_PURCHASE');/' /var/www/booked/config/config.php && \
-sed -i -e '/settings'\''\]\['\''domain.controllers/ s/=.*/= getenv('BOOKED_AD_DC');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
-sed -i -e '/settings'\''\]\['\''port/ s/=.*/= getenv('BOOKED_AD_PORT');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
-sed -i -e '/settings'\''\]\['\''username/ s/=.*/= getenv('BOOKED_AD_USERNAME');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
-sed -i -e '/settings'\''\]\['\''password/ s/=.*/= getenv('BOOKED_AD_PASSWORD');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
-sed -i -e '/settings'\''\]\['\''basedn/ s/=.*/= getenv('BOOKED_AD_BASEDN');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
-sed -i -e '/settings'\''\]\['\''version/ s/=.*/= getenv('BOOKED_AD_VERSION');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
-sed -i -e '/settings'\''\]\['\''use.ssl/ s/=.*/= getenv('BOOKED_AD_SSL');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
-sed -i -e '/settings'\''\]\['\''account.suffix/ s/=.*/= getenv('BOOKED_AD_SUFFIX');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
-sed -i -e '/settings'\''\]\['\''database.auth.when.ldap.user.not.found/ s/=.*/= getenv('BOOKED_AD_DATABASE_NO_LDAP');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
-sed -i -e '/settings'\''\]\['\''attribute.mapping/ s/=.*/= getenv('BOOKED_AD_ATTRIBUTE');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
-sed -i -e '/settings'\''\]\['\''required.groups/ s/=.*/= getenv('BOOKED_AD_REQ_GROUPS');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
-sed -i -e '/settings'\''\]\['\''sync.groups/ s/=.*/= getenv('BOOKED_AD_SYNC_GROUPS');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
-sed -i -e '/settings'\''\]\['\''use.sso/ s/=.*/= getenv('BOOKED_AD_SSO');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
-sed -i -e '/settings'\''\]\['\''prevent.clean.username/ s/=.*/= getenv('BOOKED_AD_CLEAN_USERNAME');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php
+#sed -i -e '/settings'\''\]\['\''domain.controllers/ s/=.*/= getenv('BOOKED_AD_DC');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+#sed -i -e '/settings'\''\]\['\''port/ s/=.*/= getenv('BOOKED_AD_PORT');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+#sed -i -e '/settings'\''\]\['\''username/ s/=.*/= getenv('BOOKED_AD_USERNAME');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+#sed -i -e '/settings'\''\]\['\''password/ s/=.*/= getenv('BOOKED_AD_PASSWORD');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+#sed -i -e '/settings'\''\]\['\''basedn/ s/=.*/= getenv('BOOKED_AD_BASEDN');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+#sed -i -e '/settings'\''\]\['\''version/ s/=.*/= getenv('BOOKED_AD_VERSION');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+#sed -i -e '/settings'\''\]\['\''use.ssl/ s/=.*/= getenv('BOOKED_AD_SSL');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+#sed -i -e '/settings'\''\]\['\''account.suffix/ s/=.*/= getenv('BOOKED_AD_SUFFIX');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+#sed -i -e '/settings'\''\]\['\''database.auth.when.ldap.user.not.found/ s/=.*/= getenv('BOOKED_AD_DATABASE_NO_LDAP');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+#sed -i -e '/settings'\''\]\['\''attribute.mapping/ s/=.*/= getenv('BOOKED_AD_ATTRIBUTE');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+#sed -i -e '/settings'\''\]\['\''required.groups/ s/=.*/= getenv('BOOKED_AD_REQ_GROUPS');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+#sed -i -e '/settings'\''\]\['\''sync.groups/ s/=.*/= getenv('BOOKED_AD_SYNC_GROUPS');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+#sed -i -e '/settings'\''\]\['\''use.sso/ s/=.*/= getenv('BOOKED_AD_SSO');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+#sed -i -e '/settings'\''\]\['\''prevent.clean.username/ s/=.*/= getenv('BOOKED_AD_CLEAN_USERNAME');/' /var/www/booked/plugins/Authentication/ActiveDirectory/ActiveDirectory.config.php && \
+sed -i -e '/settings'\''\]\['\''host/ s/=.*/= getenv('BOOKED_AD_DC');/' /var/www/booked/plugins/Authentication/Ldap/Ldap.config.php && \
+sed -i -e '/settings'\''\]\['\''port/ s/=.*/= getenv('BOOKED_AD_PORT');/' /var/www/booked/plugins/Authentication/Ldap/Ldap.config.php && \
+sed -i -e '/settings'\''\]\['\''version/ s/=.*/= getenv('BOOKED_AD_VERSION');/' /var/www/booked/plugins/Authentication/Ldap/Ldap.config.php && \
+sed -i -e '/settings'\''\]\['\''starttls/ s/=.*/= getenv('BOOKED_AD_SSL');/' /var/www/booked/plugins/Authentication/Ldap/Ldap.config.php && \
+sed -i -e '/settings'\''\]\['\''binddn/ s/=.*/= getenv('BOOKED_AD_USERNAME');/' /var/www/booked/plugins/Authentication/Ldap/Ldap.config.php && \
+sed -i -e '/settings'\''\]\['\''bindpw/ s/=.*/= getenv('BOOKED_AD_PASSWORD');/' /var/www/booked/plugins/Authentication/Ldap/Ldap.config.php && \
+sed -i -e '/settings'\''\]\['\''basedn/ s/=.*/= getenv('BOOKED_AD_BASEDN');/' /var/www/booked/plugins/Authentication/Ldap/Ldap.config.php && \
+sed -i -e '/settings'\''\]\['\''filter/ s/=.*/= getenv('BOOKED_AD_FILTER');/' /var/www/booked/plugins/Authentication/Ldap/Ldap.config.php && \
+sed -i -e '/settings'\''\]\['\''scope/ s/=.*/= getenv('BOOKED_AD_SCOPE');/' /var/www/booked/plugins/Authentication/Ldap/Ldap.config.php && \
+sed -i -e '/settings'\''\]\['\''required.groups/ s/=.*/= getenv('BOOKED_AD_REQ_GROUPS');/' /var/www/booked/plugins/Authentication/Ldap/Ldap.config.php && \
+sed -i -e '/settings'\''\]\['\''database.auth.when.ldap.user.not.found/ s/=.*/= getenv('BOOKED_AD_DATABASE_NO_LDAP');/' /var/www/booked/plugins/Authentication/Ldap/Ldap.config.php && \
+sed -i -e '/settings'\''\]\['\''ldap.debug.enabled/ s/=.*/= getenv('BOOKED_AD_DEBUG');/' /var/www/booked/plugins/Authentication/Ldap/Ldap.config.php && \
+sed -i -e '/settings'\''\]\['\''attribute.mapping/ s/=.*/= getenv('BOOKED_AD_ATTRIBUTE');/' /var/www/booked/plugins/Authentication/Ldap/Ldap.config.php && \
+sed -i -e '/settings'\''\]\['\''user.id.attribute/ s/=.*/= getenv('BOOKED_AD_USERATTRIBUTE');/' /var/www/booked/plugins/Authentication/Ldap/Ldap.config.php && \
+sed -i -e '/settings'\''\]\['\''sync.groups/ s/=.*/= getenv('BOOKED_AD_SYNC_GROUPS');/' /var/www/booked/plugins/Authentication/Ldap/Ldap.config.php && \
+sed -i -e '/settings'\''\]\['\''prevent.clean.username/ s/=.*/= getenv('BOOKED_AD_CLEAN_USERNAME');/' /var/www/booked/plugins/Authentication/Ldap/Ldap.config.php
+
 #RUN if [ $BOOKED_UPCOMING_RESERVATIONS <> "13" ] ; then '$lastDate = $now->AddDays(13-$dayOfWeek-1);' -> '$lastDate = $now->AddDays(60-$dayOfWeek-1);' - UpcomingReservationsPresenter.php
 #CMD sh -c 'if [ "$feature_enabled" = true ]; then echo "Feature activated"; else echo "Feature not activated"; fi'
 #RUN if [ $BOOKED_UPCOMING_RESERVATIONS <> "13" ] ; then '$lastDate = $now->AddDays(13-$dayOfWeek-1);' -> '$lastDate = $now->AddDays(60-$dayOfWeek-1);' - UpcomingReservationsPresenter.php
